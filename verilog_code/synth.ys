@@ -1,0 +1,14 @@
+# Lê todos os arquivos Verilog e SystemVerilog
+read_verilog -sv Branch_Decider.v BTB.v control.v EX_MEM.v forward_unit.v hazard_detection_unit.v ID_EX.v IF_ID.v instruction_memory.v main_memory.v MEM_WB.v PC.v RegisterMuxForBranch.v register_bank.v RV32i.v tb_ULA.v ULA.v Ula_controler.v convertido.v
+
+# Define o módulo principal (ajuste se o nome do modulo não for RV32i)
+hierarchy -check -top RV32i
+
+# Executa a síntese
+synth
+
+# Exibe o relatório de área (estatísticas de portas)
+stat
+
+# Exibe o caminho crítico (estimativa de velocidade/MOF)
+ltp

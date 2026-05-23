@@ -15,8 +15,8 @@ module BranchDecider (
         3'b001: Branch = ($signed(rs1) != $signed(rs2));   // BNE
         3'b100: Branch = ($signed(rs1) < $signed(rs2));    // BLT
         3'b101: Branch = ($signed(rs1) >= $signed(rs2));   // BGE
-        3'b110: Branch = (rs1 < rs2); // BLT signed
-        3'b111: Branch = (rs1 >= rs2); // BGE signed
+        3'b110: Branch = (rs1 < rs2); // BLT unsigned
+        3'b111: Branch = (rs1 >= rs2); // BGE unsigned
         default: Branch = 1'b0;
       endcase
     end

@@ -1,7 +1,7 @@
 module ULA (
-		input [31:0]A,
-		input [31:0]B,
-		input [3:0]ula_op, 
+		input wire [31:0]A,
+		input wire [31:0]B,
+		input wire [3:0]ula_op, 
 		output reg [31:0]C,
 		output reg ULA_zero
 );

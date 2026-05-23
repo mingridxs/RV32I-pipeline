@@ -270,11 +270,11 @@ endmodule
   input wire [63:0] in_op,
   input wire [1:0] in_funct3,
   input wire [4:0] in_Rd,
-  input wire [63:0] in_pp [15:0],
+  input wire [63:0] in_pp [0:15],
   output reg [1:0] out_funct3,
-  output reg [63:0] pp [15:0],
-    output reg [4:0] Rd,
-    output reg [63:0] pp_op
+  output reg [63:0] pp [0:15],
+  output reg [4:0] Rd,
+  output reg [63:0] pp_op
 );
   
   integer i;

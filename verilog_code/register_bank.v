@@ -13,7 +13,7 @@ module register_bank(
     assign A = registers[rs1];
     assign B = registers[rs2];
 
-    always @(posedge clk, posedge rst) begin
+    always @(posedge clk or posedge rst) begin
         if (rst) begin :reset_loop
             // Inicializa todos os registradores com 0
             integer i;  

@@ -33,10 +33,11 @@ module tb_RV32i;
         // $readmemb("testbenchs/binarios/Exemplos/program.bin", dut.im.instruction_memory);
         // $readmemb("testbenchs/binarios/Exemplos/flush.bin", dut.im.instruction_memory);
         $readmemb("testBenchs/binarios/mul/mul_big.bin", dut.im.instruction_memory);
-        // $readmemb("testBenchs/binarios/Branchs/bne.bin", dut.im.instruction_memory);
+        // $readmemb("testBenchs/binarios/Branchs/blt.bin", dut.im.instruction_memory);
         // $readmemb("testBenchs/binarios/BTB/teste_BTB.bin", dut.im.instruction_memory);
         // $readmemb("testBenchs/binarios/BTB/BTB_miss.bin", dut.im.instruction_memory);
-
+        // $readmemb("geradorBinario/binary_instructions.txt", dut.im.instruction_memory);
+        
         $readmemb("testbenchs/binarios/memoria.bin", dut.m_m.memory);
         assign dut.reg_bank.registers[1] = 32'hFFFFFFFA; // -6 em complemento de 2
         assign dut.reg_bank.registers[2] = 32'hFFFFFFFC; // -4 em complemento de 2
@@ -85,7 +86,6 @@ always @(posedge clk) begin
 
         // --- CABEÇALHO DO CICLO ---
         // Adiciona um cabeçalho claro para cada ciclo de clock
-        $display("imm_b: %12b | imm_j: %20b", dut.IF_ID.imm_B, dut.IF_ID.imm_J);
         $display("\n//--------------------[ CICLO @ %0t ]--------------------//", $time);
 
         // --- ESTÁGIO IF ---
@@ -93,9 +93,9 @@ always @(posedge clk) begin
         // --- BRANCH TARGET BUFFER ---
         $display("  [BTB] Inputs -> pc: %8h | IFID_pc: %8h | target_address: %8h | branch_taken: %b",
                  dut.btb.pc, dut.btb.IFID_pc, dut.btb.target_address, dut.btb.branch_taken);
-        $display("       Outputs -> predicted_address: %8h | predicted: %b",
+        $display("       Outputs -> predicted_address: %8h | predicted: %8h",
                  dut.btb.predicted_address, dut.btb.predicted);
-        $display("       Internal -> pc_less: %3d | buffer_pc: %b | buffer_target: %b | buffer_state: %2b | buffer_valid: %b",
+        $display("       Internal -> pc_less: %3d | buffer_pc: %8h | buffer_target: %8h | buffer_state: %2b | buffer_valid: %b",
                  dut.btb.pc_less, dut.btb.buffer[dut.btb.pc_less][66:35], dut.btb.buffer[dut.btb.pc_less][34:3], dut.btb.buffer[dut.btb.pc_less][2:1], dut.btb.buffer[dut.btb.pc_less][0]);
         $display("-----------------------------------------------------------------");
         

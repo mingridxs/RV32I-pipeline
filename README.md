@@ -47,6 +47,8 @@ O projeto está organizado da seguinte forma:
 │   ├── instruction_memory.v# Memória de Instruções
 │   └── synth.ys            # Script de Síntese Yosys para verificação/análise
 │
+├── Makefile                # Automação da simulação com Icarus Verilog
+│
 ├── testBenchs/             # Testbenches para Simulação
 │   ├── tb_RV32i.v          # Testbench principal do processador completo
 │   ├── binarios/           # Arquivos .bin com instruções montadas para testes
@@ -120,7 +122,97 @@ Para carregar seu programa na simulação:
 
 ---
 
-### 3. Síntese com Yosys
+### 2. Simulação com Icarus Verilog
+
+Requisitos: `iverilog` (versão 11 ou superior) e, opcionalmente, `gtkwave` para visualizar formas de onda.
+
+```bash
+# Arch / CachyOS
+sudo pacman -S iverilog gtkwave
+# Debian / Ubuntu
+sudo apt install iverilog gtkwave
+```
+
+Um `Makefile` na raiz do repositório cuida da compilação e da execução. **Rode sempre a partir da raiz do projeto**, pois os caminhos dos arquivos de memória são relativos a ela.
+
+```bash
+make          # compila e executa o testbench principal (tb_RV32i)
+make clean    # remove os artefatos gerados (sim_*.vvp, sim.vcd)
+```
+
+O `Makefile` coleta automaticamente todos os fontes de `verilog_code/`, exceto as netlists sintetizadas (`convertido.v`, `netlist_mapeada.v`) e o testbench isolado `tb_ULA.v`, que duplicariam definições de módulos. Arquivos novos adicionados ao diretório entram na compilação sem nenhuma alteração no `Makefile`.
+
+Internamente, o alvo executa dois passos: `iverilog` compila os fontes em um bytecode (`sim_tb_RV32i.vvp`) e `vvp` executa esse bytecode. A flag `-g2012` é obrigatória, pois o multiplicador (`FullMultiplierPipelinedFunctionalUS.sv`) usa construções SystemVerilog.
+
+#### Escolhendo o programa a executar
+
+O testbench lê o programa e a memória de dados através de *plusargs*, de modo que trocar de programa **não exige recompilar**:
+
+```bash
+make PROG=testBenchs/binarios/Branchs/blt.bin
+make PROG=testBenchs/binarios/BTB/teste_BTB.bin
+make PROG=geradorBinario/binary_instructions.txt   # programa recém-montado
+make MEM=testBenchs/binarios/memoria.bin           # memória de dados alternativa
+```
+
+Sem esses parâmetros, os padrões são `testBenchs/binarios/mul/mul_big.bin` (programa) e `testBenchs/binarios/memoria.bin` (memória de dados). O testbench imprime no início da execução quais arquivos foram carregados.
+
+O mesmo pode ser feito chamando o simulador diretamente:
+
+```bash
+vvp sim_tb_RV32i.vvp +prog=testBenchs/binarios/Branchs/blt.bin +mem=testBenchs/binarios/memoria.bin
+```
+
+#### Simulando um módulo isolado
+
+Os testbenches de componentes seguem o mesmo fluxo, bastando informar qual usar:
+
+```bash
+make TB=tb_IF_ID
+make TB=tb_EX_MEM
+make TB=tb_MEM_WB
+```
+
+Atenção: esses testbenches de componente não chamam `$finish`, então a simulação não termina sozinha — interrompa com `Ctrl+C`. Dois deles estão atualmente desatualizados em relação aos módulos e não compilam, pois referenciam portas que não existem mais: `tb_ID_EX` (`mux_res_ula_in`, `mux_res_ula_out`) e `hazard_detection_unit_tb` (`IFID_RegisterR1`, `IFID_RegisterR2`, `IDEX_RegisterRt`).
+
+#### Formas de onda
+
+Para gerar um arquivo VCD, adicione ao bloco `initial` do testbench:
+
+```verilog
+$dumpfile("sim.vcd");
+$dumpvars(0, tb_RV32i);
+```
+
+Em seguida:
+
+```bash
+make wave     # executa a simulação e abre o gtkwave
+```
+
+#### Saída da simulação
+
+O testbench imprime no console o estado completo do processador a cada ciclo: conteúdo dos registradores de pipeline (IF/ID, ID/EX, EX/MEM, MEM/WB), sinais das unidades de Hazard e Forwarding, estado do BTB, operandos e resultado da ULA, além do banco de registradores e da memória de dados ao final. A execução termina quando o processador encontra a instrução `HALT`.
+
+Um aviso do tipo `$readmemb: Not enough words in the file for the requested range [0:1023]` é esperado e inofensivo: indica apenas que o programa é menor que a memória de instruções, cujas posições restantes permanecem indefinidas. Basta que o programa termine com `HALT`.
+
+---
+
+### 3. Simulação no ModelSim / Quartus
+
+O mesmo testbench (`testBenchs/tb_RV32i.v`) roda no ModelSim. Compile todos os fontes de `verilog_code/` (novamente, sem as netlists sintetizadas) junto do testbench e execute `tb_RV32i`.
+
+Para escolher o programa, use os mesmos *plusargs* na chamada do `vsim`:
+
+```tcl
+vsim tb_RV32i +prog=geradorBinario/binary_instructions.txt
+```
+
+Alternativamente, edite os valores padrão de `prog_file` e `mem_file` diretamente no testbench.
+
+---
+
+### 4. Síntese com Yosys
 
 O repositório possui suporte básico para síntese lógica de verificação usando o Yosys. Você pode rodar a síntese a partir do diretório `verilog_code` usando o arquivo `synth.ys`:
 ```bash

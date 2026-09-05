@@ -26,21 +26,27 @@ module tb_RV32i;
         forever #5 clk = ~clk;
     end
     
+    // --- Arquivos de entrada (sobrescritos por plusargs) ---
+    reg [1023:0] prog_file;
+    reg [1023:0] mem_file;
+
     // --- Sequência de Teste Principal ---
     initial begin
         // 4. Carrega o programa na memória ANTES de começar a simulação.
-        // $readmemb("testBenchs/binarios/Testes/testes.bin", dut.im.instruction_memory);
-        // $readmemb("testbenchs/binarios/Exemplos/program.bin", dut.im.instruction_memory);
-        // $readmemb("testbenchs/binarios/Exemplos/flush.bin", dut.im.instruction_memory);
-        $readmemb("testBenchs/binarios/mul/mul_big.bin", dut.im.instruction_memory);
-        // $readmemb("testBenchs/binarios/Branchs/blt.bin", dut.im.instruction_memory);
-        // $readmemb("testBenchs/binarios/BTB/teste_BTB.bin", dut.im.instruction_memory);
-        // $readmemb("testBenchs/binarios/BTB/BTB_miss.bin", dut.im.instruction_memory);
-        // $readmemb("geradorBinario/binary_instructions.txt", dut.im.instruction_memory);
-        
-        $readmemb("testbenchs/binarios/memoria.bin", dut.m_m.memory);
-        assign dut.reg_bank.registers[1] = 32'hFFFFFFFA; // -6 em complemento de 2
-        assign dut.reg_bank.registers[2] = 32'hFFFFFFFC; // -4 em complemento de 2
+       // Arquivos escolhidos por plusargs: vvp sim.vvp +prog=<arquivo> +mem=<arquivo>
+        // Sem plusargs, usa os padrões abaixo.
+        if (!$value$plusargs("prog=%s", prog_file))
+            prog_file = "testBenchs/binarios/mul/mul_big.bin";
+        if (!$value$plusargs("mem=%s", mem_file))
+            mem_file = "testBenchs/binarios/memoria.bin";
+
+        $display("[TB] programa: %0s", prog_file);
+        $display("[TB] memoria : %0s", mem_file);
+
+        $readmemb(prog_file, dut.im.instruction_memory);
+        $readmemb(mem_file, dut.m_m.memory);
+        dut.reg_bank.registers[1] = 32'hFFFFFFFA; // -6 em complemento de 2
+        dut.reg_bank.registers[2] = 32'hFFFFFFFC; // -4 em complemento de 2
 
         // assign dut.m_m.memory[0] = 8'b1000;
         // assign dut.m_m.memory[1] = 8'b1;

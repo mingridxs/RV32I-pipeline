@@ -13,6 +13,7 @@ module ULA_controler(
 always @(*) begin
     if (rst) begin
         operation <= 4'b0000;
+        err <= 1'b0;
     end else begin
 	     operation <= 4'b0000;
 		  err <= 1'b0; 

@@ -23,3 +23,6 @@ R232i_nativelink_simulation.rpt
 R232i.qpf
 R232i.qws
 c5_pin_model_dump.txt
+sim.vvp
+*.vvp
+*.vcd

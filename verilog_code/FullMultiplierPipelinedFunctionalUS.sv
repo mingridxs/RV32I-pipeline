@@ -415,7 +415,7 @@ module ResultBlockRegister (
       Rd <= 5'b0;
       res <= 64'b0;
       almost_op <= 64'b0;
-      out_funct3 <= in_funct3;
+      out_funct3 <= 2'b00;
     end
     
     else begin

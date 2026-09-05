@@ -1,0 +1,82 @@
+# Fluxo 1: area/profundidade apenas do nucleo do processador.
+# As memorias sao tratadas como blackbox: em silicio elas seriam macros SRAM
+# (ou BRAM, em FPGA), nunca flip-flops. Sintetizar o conteudo delas domina o
+# relatorio de area (>95% das celulas) e torna o numero incomparavel.
+
+read_verilog -sv Branch_Decider.v BTB.v control.v EX_MEM.v forward_unit.v \
+    hazard_detection_unit.v ID_EX.v IF_ID.v instruction_memory.v main_memory.v \
+    MEM_WB.v PC.v RegisterMuxForBranch.v register_bank.v RV32i.v ULA.v \
+    Ula_controler.v convertido.v
+
+hierarchy -check -top RV32i
+blackbox main_memory instruction_memory
+
+# Diagramas do datapath, no nivel RTL. Tem que ser ANTES do synth: depois dele o
+# design tem 111 mil celulas de porta logica e o grafo fica ilegivel.
+# O argumento final e uma selecao (nome de MODULO), nao um arquivo .v.
+#   -format svg  vetorial: 375 KB e zoom infinito, contra 7 MB de PNG rasterizado
+#                em 15233 x 5181 px, que nenhum visualizador abre direito.
+#   -width       anota a largura dos barramentos nas arestas ([31:0]).
+#   -viewer none nao abre a imagem ao terminar (senao pendura em execucao batch).
+proc
+opt_clean
+show -format svg -prefix diagrama_rv32i -viewer none -width -signed -colors 1 RV32i
+
+# O diagrama do topo tem 650 nos. Para ler um bloco de verdade, desenhe so ele.
+# Um diagrama por modulo, do maior para o menor.
+#
+# BranchTargetBuffer NAO entra: o proc expande reg [66:0] buffer[0:255] em 256
+# registradores, o .dot sai com 7,7 MB e o dot nao termina o layout (matei em
+# 90 s). Os outros 29 modulos renderizam todos. Para ver o BTB, use netlistsvg,
+# que usa ELK no lugar do Graphviz:
+#   yosys -p 'read_verilog BTB.v; prep -top BranchTargetBuffer; write_json btb.json'
+#   node --stack-size=60000 $(npm root -g)/netlistsvg/bin/netlistsvg.js btb.json -o btb.svg
+
+# Estagios do pipeline
+show -format svg -prefix diagrama_pc     -viewer none -width PC
+show -format svg -prefix diagrama_if_id  -viewer none -width IF_ID
+show -format svg -prefix diagrama_id_ex  -viewer none -width ID_EX
+show -format svg -prefix diagrama_ex_mem -viewer none -width EX_MEM
+show -format svg -prefix diagrama_mem_wb -viewer none -width MEM_WB
+
+# Controle e resolucao de conflitos
+show -format svg -prefix diagrama_control        -viewer none -width control
+show -format svg -prefix diagrama_hazard         -viewer none -width hazard_detection_unit
+show -format svg -prefix diagrama_forward        -viewer none -width forward_unit
+show -format svg -prefix diagrama_branch_decider -viewer none -width BranchDecider
+
+# Caminho de dados
+show -format svg -prefix diagrama_ula          -viewer none -width ULA
+show -format svg -prefix diagrama_ula_ctrl     -viewer none -width ULA_controler
+show -format svg -prefix diagrama_register_bank -viewer none -width register_bank
+
+# Multiplicador: topo, blocos combinacionais e os registradores de pipeline
+show -format svg -prefix diagrama_mul            -viewer none -width MulPipelined32Bits
+show -format svg -prefix diagrama_mul_pp4adder   -viewer none -width PP4Adder
+show -format svg -prefix diagrama_mul_pp2adder   -viewer none -width PP2Adder
+show -format svg -prefix diagrama_mul_compressor -viewer none -width Compressor4_2
+show -format svg -prefix diagrama_mul_decoder64  -viewer none -width Decoder_64
+show -format svg -prefix diagrama_mul_encoder    -viewer none -width Encoder_Radix_4
+show -format svg -prefix diagrama_mul_sbdecoder  -viewer none -width Single_Bit_Decoder
+show -format svg -prefix diagrama_mul_extdecider -viewer none -width EXTDecider
+show -format svg -prefix diagrama_mul_msbdecider -viewer none -width MSBDecider
+show -format svg -prefix diagrama_mul_zerar      -viewer none -width Zerar
+show -format svg -prefix diagrama_mul_reg_pp     -viewer none -width PPRegister
+show -format svg -prefix diagrama_mul_reg_1st    -viewer none -width FirstBlockRegister
+show -format svg -prefix diagrama_mul_reg_2nd    -viewer none -width SecondBlockRegister
+show -format svg -prefix diagrama_mul_reg_3rd    -viewer none -width ThirdBlockRegister
+show -format svg -prefix diagrama_mul_reg_result -viewer none -width ResultBlockRegister
+show -format svg -prefix diagrama_mul_reg_signal -viewer none -width MulSignalRegister
+
+synth -top RV32i
+
+# Area por modulo, com a hierarquia preservada.
+stat -top RV32i
+
+# O ltp exige o design achatado. Numa netlist hierarquica cada submodulo e uma
+# caixa opaca: o caminho pc -> BTB -> PC -> pc atravessa a instancia do PC sem
+# que o ltp enxergue o flip-flop la dentro, e vira falso "Detected loop".
+# -noff e igualmente obrigatorio, senao o ltp atravessa os flip-flops que ele ve.
+flatten
+opt_clean
+ltp -noff

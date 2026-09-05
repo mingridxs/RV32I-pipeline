@@ -47,7 +47,6 @@ module tb_RV32i;
         $readmemb(mem_file, dut.m_m.memory);
         dut.reg_bank.registers[1] = 32'hFFFFFFFA; // -6 em complemento de 2
         dut.reg_bank.registers[2] = 32'hFFFFFFFC; // -4 em complemento de 2
-
         // assign dut.m_m.memory[0] = 8'b1000;
         // assign dut.m_m.memory[1] = 8'b1;
         // assign dut.m_m.memory[2] = 8'b0;

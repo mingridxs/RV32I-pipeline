@@ -213,7 +213,6 @@ Alternativamente, edite os valores padrão de `prog_file` e `mem_file` diretamen
 ---
 
 ### 4. Síntese com Yosys
-
 O repositório possui suporte básico para síntese lógica de verificação usando o Yosys. Você pode rodar a síntese a partir do diretório `verilog_code` usando o arquivo `synth.ys`:
 ```bash
 yosys synth.ys

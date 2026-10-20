@@ -68,7 +68,7 @@ always @(*) begin
             mem_wr = 1'b0;
             ula_op = 2'b00;
             reg_wr = 1'b1;
-            mux_reg_wr = 1'b0; 
+            mux_reg_wr = 1'b1; 
             alu_src1 = 2'b00;
             alu_src2 = 2'b01;
             jump = 1'b0;

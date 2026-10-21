@@ -1,0 +1,7 @@
+# Regras do Verible que pedem recursos de SystemVerilog; o projeto usa Verilog
+-explicit-parameter-storage-type
+-always-comb
+-explicit-task-lifetime
+-explicit-function-task-parameter-type
+# Aceitar constantes em MAIUSCULAS_COM_UNDERLINE (ex.: CSR_MTVEC)
+parameter-name-style=localparam_style:ALL_CAPS|CamelCase;parameter_style:ALL_CAPS|CamelCase

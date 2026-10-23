@@ -7,6 +7,7 @@ module ID_EX(
 	input	wire [1:0] alu_src1_in,
 	input	wire [1:0] alu_src2_in,
 	input   wire       mul_in,
+	input wire csr_in,
 
 	// controle MEM
 	input	wire mem_rd_in,
@@ -45,6 +46,7 @@ module ID_EX(
 	output	wire [1:0] alu_src1_out,
 	output	wire [1:0] alu_src2_out,
 	output wire  mul_out,
+	output wire  csr_out,
 	output	wire mem_rd_out,
 	output	wire mem_wr_out,
 	output	wire reg_wr_out,
@@ -65,7 +67,7 @@ reg [1:0] ula;
 reg [1:0] alu_src1;
 reg [1:0] alu_src2;
 //sinais de controle
-reg mem_rd, mem_wr, reg_wr, mux_reg_wr, mul;
+reg mem_rd, mem_wr, reg_wr, mux_reg_wr, mul, csr;
 
 assign pc_out = pc;
 // leitura
@@ -85,6 +87,7 @@ assign mux_reg_wr_out = mux_reg_wr;
 assign alu_src1_out = alu_src1;
 assign alu_src2_out = alu_src2;
 assign mul_out = mul;
+assign csr_out = csr;
 
 // escrita
 always @(posedge clk or posedge rst) begin
@@ -106,6 +109,7 @@ always @(posedge clk or posedge rst) begin
 		alu_src1 <= 2'b0;
 		alu_src2 <= 2'b0;
 		mul <= 1'b0;
+		csr <= 1'b0;
 	end else if (enable) begin
 		pc <= pc_in;
 		imm <= imm_in;
@@ -124,6 +128,7 @@ always @(posedge clk or posedge rst) begin
 		alu_src1 <= alu_src1_in;
 		alu_src2 <= alu_src2_in;
 		mul <= mul_in;
+		csr <= csr_in;
 	end
 end
 

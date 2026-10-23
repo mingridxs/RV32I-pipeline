@@ -65,6 +65,10 @@ module RV32i(
   wire [2:0] counter;
   wire [31:0] signedS, unsignedS; 
   wire [63:0] tempS, tempU;
+  // CSR
+  wire IDEXcsr;
+  wire [31:0] csr_rdata;
+  wire illegal_csr;
   //EX/MEM
   wire EXMEMmem_rd,EXMEMmem_wr, EXMEMreg_wr, EXMEMmux_reg_wr;
   wire [31:0] EXMEMula_res, EXMEMval_B;
@@ -167,6 +171,8 @@ module RV32i(
     mul = (opcode == 7'b0110011) && (funct7 == 7'b0000001); // verifica se é uma instrução de multiplicação
   end
 
+  wire is_csr = (opcode == 7'b1110011) && (funct3 != 3'b000);
+
   hazard_detection_unit hdu (
     .IDEX_RegWrite(IDEXreg_wr),
     .EXMEM_MemRead(EXMEMmem_rd),
@@ -194,7 +200,7 @@ module RV32i(
   always @(*) begin
     case (opcode)
       7'b0110011: imm_gen_output = {32{1'b0}}; // tipo R
-      7'b0010011, 7'b0000011, 7'b1100111: imm_gen_output = {{20{imm_I[11]}}, imm_I}; //tipo I
+      7'b0010011, 7'b0000011, 7'b1100111, 7'b1110011: imm_gen_output = {{20{imm_I[11]}}, imm_I}; //tipo I
       7'b0100011: imm_gen_output = {{20{imm_S[11]}}, imm_S}; //tipo S
       7'b1100011: imm_gen_output = {{19{imm_B[11]}}, imm_B, 1'b0}; //tipo B
       7'b1101111: imm_gen_output = {{11{imm_J[19]}}, imm_J, 1'b0}; //tipo J
@@ -253,6 +259,7 @@ module RV32i(
     .reg_wr_in(~Bolha ? reg_wr : 1'b0),
     .mux_reg_wr_in(~Bolha ? mux_reg_mem : 1'b0),
     .mul_in(~Bolha ? mul : 1'b0),
+    .csr_in(~Bolha ? is_csr : 1'b0),
     .pc_in(IFID_pc),
     .imm_in(jump ? 4 : imm_gen_output),
     .rs1_in(IFID_rs1),
@@ -281,6 +288,7 @@ module RV32i(
     .mem_wr_out(IDEXmem_wr),
     .reg_wr_out(IDEXreg_wr),
     .mul_out(IDEXmul),
+    .csr_out(IDEXcsr),
     .mux_reg_wr_out(IDEXmux_reg_wr)
   );
   //forward unit
@@ -353,6 +361,18 @@ module RV32i(
 		.ULA_zero (ULA_zero),
 		.ula_op (operation)
 	);
+
+  csr_unit csr (
+    .clk(clk),
+    .rst(rst),
+    .csr_en(IDEXcsr & enable),
+    .funct3(IDEXfunct3),
+    .csr_addr(IDEXimm[11:0]),
+    .rs1_field(IDEXrs1),
+    .rs1_val(forwarding_A),
+    .csr_rdata(csr_rdata),
+    .illegal_csr(illegal_csr)   // ainda sem uso; 
+  );
   
   MulPipelined32Bits uut (
     .Clk(clk),
@@ -375,7 +395,8 @@ module RV32i(
     .reg_wr_in(Bolha_mem ? 1'b0 : IDEXreg_wr),
     .mux_reg_wr_in(Bolha_mem ? 1'b0 : IDEXmux_reg_wr),
     .funct3_in(IDEXfunct3),
-    .ula_res_in(IDEXmul ? (IDEXfunct3[1] ? unsignedS[31:0] : signedS[31:0]) : ULA_C),
+    .ula_res_in(IDEXcsr ? csr_rdata :
+            IDEXmul ? (IDEXfunct3[1] ? unsignedS[31:0] : signedS[31:0]) : ULA_C),
     .val_B_in(forwarding_B),
     .rd_in(IDEXrd),
     .clk(clk),

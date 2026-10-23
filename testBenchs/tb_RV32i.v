@@ -65,6 +65,8 @@ module tb_RV32i;
         rst = 0;
         enable = 1; // Habilita o processador
         #1000;
+        for (integer r = 1; r <= 10; r = r + 1)
+            $display("x%0d = %h", r, dut.reg_bank.registers[r]);
         $finish;
     
     end
